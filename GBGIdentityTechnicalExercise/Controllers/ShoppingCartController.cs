@@ -1,5 +1,4 @@
 ﻿using GBGIdentityTechnicalExercise.Models;
-using GBGIdentityTechnicalExercise.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GBGIdentityAPI.Controllers
@@ -8,44 +7,92 @@ namespace GBGIdentityAPI.Controllers
     [ApiController]
     public class ShoppingCartController : ControllerBase
     {
-        private readonly ShoppingCart _shoppingCart;
-
-        public ShoppingCartController(ShoppingCart shoppingCart)
+        private static List<Product> products = new List<Product>
         {
-            _shoppingCart = shoppingCart;
-        }
+            new Product
+            {
+                Name = "Milk",
+                Price = 0.99M
+            },
+            new Product
+            {
+                Name = "Bread",
+                Price = 1.49M
+            },
+            new Product
+            {
+                Name = "Butter",
+                Price = 1.87M
+            },
+            new Product
+                       
+            {
+                Name = "Sugar",
+                Price = 0.80M
+            }
+
+        };
 
         [HttpGet]
-        public ActionResult<IEnumerable<Product>> GetProducts()
+        public ActionResult<List<Product>> GetListOfProducts()
         {
-            var listOfProducts = _shoppingCart.GetProducts();
-            return Ok(listOfProducts); // returns status code 200
+            return Ok(products);    // returns status code 200, Success
         }
 
-
-       [HttpPost]
-       public ActionResult AddProductsToCart(Product product) 
-       {
-            _shoppingCart.AddProduct(product);
-            return Ok();
-       }
-
-       [HttpDelete("{productName}")]
-       public ActionResult RemoveProduct(string productToRemove) 
-       {
-            _shoppingCart.RemoveProduct(productToRemove);
-            return Ok();
-       }
-
-        [HttpGet("checkout")]
-        public ActionResult Checkout(bool hasLoyaltyCard)
+        [HttpGet("{productPrice}")]
+        public ActionResult<List<Product>>GetProductByPrice(decimal productPrice)
         {
-            // This will return list of products in alphabetical order along with their respective prices, any discounts applied, and the total cost
-            var totalCost = _shoppingCart.CalculateTotaCost(hasLoyaltyCard);
-            var products = _shoppingCart.GetProducts();
-                       
-            return Ok(new { Products = products, TotalCost = totalCost });
+            var price = products.Find(x => x.Price == productPrice);
+            if (price == null)
+            {
+                return NotFound("The product you're looking for, does not exist");
+            }
+            return Ok(price);
         }
+
+        [HttpPost]
+        public ActionResult<List<Product>> AddProductToCart(Product newProduct, bool hasLoyaltyCard = false)
+        {
+            // promotions applied for Butter and Sugar if the customer has a loyalty card
+            if (hasLoyaltyCard)
+            {
+                if (newProduct.Name == "Butter")
+                {
+                    // Buy one, get one free
+                    products.Add(newProduct);
+                }
+                else if (newProduct.Name == "Sugar")
+                {
+                    // 10% discount
+                    newProduct.Price *= 0.9M;
+                    products.Add(newProduct);
+                }
+                else
+                {
+                    products.Add(newProduct);
+                }
+            }
+            else
+            {
+                products.Add(newProduct);
+            }
+
+            return Ok(products);
+        }
+
+        [HttpDelete("{productPrice}")]
+        public ActionResult<List<Product>>RemoveProductFromCart(string name)
+        {
+            var productName = products.Find(x => x.Name == name);
+            if (productName == null)
+            {
+                return NotFound("Error! Please check the product before performing this action");
+            }
+            products.Remove(productName);
+            return Ok(products);
+        }
+
+        
 
     }
 }
