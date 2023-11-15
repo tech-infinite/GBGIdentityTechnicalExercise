@@ -60,6 +60,11 @@ namespace GBGIdentityAPI.Controllers
                 {
                     // Buy one, get one free
                     products.Add(newProduct);
+                    products.Add(new Product
+                    {
+                        Name = "Butter",
+                        Price = 0M  // Price is set to 0 for the free Butter
+                    });
                 }
                 else if (newProduct.Name == "Sugar")
                 {
@@ -72,11 +77,7 @@ namespace GBGIdentityAPI.Controllers
                     products.Add(newProduct);
                 }
             }
-            else
-            {
-                products.Add(newProduct);
-            }
-
+            
             return Ok(products);
         }
 
